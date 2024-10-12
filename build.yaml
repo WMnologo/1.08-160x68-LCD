@@ -1,0 +1,11 @@
+---
+include:
+  - board: aum_left
+    shield: nice_view
+    snippet: studio-rpc-usb-uart
+  - board: aum_right
+    shield: nice_view
+
+
+
+

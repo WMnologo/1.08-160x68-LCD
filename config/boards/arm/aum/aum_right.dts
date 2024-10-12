@@ -1,0 +1,132 @@
+#include "aum.dtsi"
+#include <dt-bindings/led/led.h>
+
+/ {
+	EXT_POWER {
+	compatible = "zmk,ext-power-generic";
+		control-gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+		init-delay-ms = <50>;
+	};
+
+right_pana_encoder: encoder_right_pana {
+        compatible = "alps,ec11";
+        a-gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        steps = <30>;
+ };
+right_encoder: encoder_right {
+        compatible = "alps,ec11";
+        a-gpios = <&gpio1 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        steps = <30>;
+ };
+sensors: sensors {
+        compatible = "zmk,keymap-sensors";
+        sensors = <&right_encoder &right_pana_encoder>;
+        triggers-per-rotation = <15>;
+    };
+};
+
+&pinctrl {
+    i2c1_default: i2c1_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 1, 15)>,
+	    <NRF_PSEL(TWIM_SCL, 0, 2)>;
+	    bias-pull-up;
+        };
+    };
+
+    i2c1_sleep: i2c1_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 1, 15)>,
+            <NRF_PSEL(TWIM_SCL, 0, 2)>;
+            low-power-enable;
+	    bias-pull-up;
+        };
+    };
+		spi2_default: spi2_default {
+				group1 {
+					psels = <NRF_PSEL(SPIM_MOSI, 0, 17)>,
+					<NRF_PSEL(SPIM_SCK, 0, 20)>;
+				};
+		};
+
+		spi2_sleep: spi2_sleep {
+				group1 {
+					psels = <NRF_PSEL(SPIM_MOSI, 0, 17)>,
+					<NRF_PSEL(SPIM_SCK, 0, 20)>;
+					low-power-enable;
+				};
+		};
+};
+
+&i2c1 {
+	compatible = "nordic,nrf-twi";
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-1 = <&i2c1_sleep>;
+	pinctrl-names = "default", "sleep"; 
+	
+
+	builtin_battery: max17048@36 {
+		compatible = "zmk,maxim-max17048";
+		status = "okay";
+		reg = <0x36>;
+	};
+
+	status = "okay";
+};
+
+lpm_view_spi: &spi2 {
+    compatible = "nordic,nrf-spim";
+    pinctrl-0 = <&spi2_default>;
+    pinctrl-1 = <&spi2_sleep>;
+    pinctrl-names = "default", "sleep";
+    cs-gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+};
+
+nice_view_spi: &spi2 {
+    compatible = "nordic,nrf-spim";
+    pinctrl-0 = <&spi2_default>;
+    pinctrl-1 = <&spi2_sleep>;
+    pinctrl-names = "default", "sleep";
+    cs-gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+};
+
+
+&default_transform {
+		col-offset=<24>;
+};
+
+/ {
+	chosen {
+		zmk,battery =&builtin_battery;
+	    	zmk,kscan = &kscan0;
+		};
+		kscan0: kscan {
+		        compatible = "zmk,kscan-gpio-matrix";
+		        label = "KSCAN";
+	
+		        diode-direction = "col2row";
+		        col-gpios
+			    = <&gpio0  2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    , <&gpio1  15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+		  	    , <&gpio1  13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    , <&gpio1  11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    , <&gpio0  10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    , <&gpio0  9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    ;
+		        row-gpios
+			    = <&gpio0  24 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    , <&gpio1  0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+		  	    , <&gpio0  11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    , <&gpio1  4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    , <&gpio1  6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)> 
+			    ;
+	    };
+	leds {
+		compatible = "gpio-leds";
+		blue_led: led_0 {
+			gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
